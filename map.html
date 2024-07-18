@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Current Location with Leaflet</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 300px;
+            width: 100%;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Get Current Location</h1>
+
+    <label for="location">Location:</label>
+    <input type="text" id="location" readonly>
+
+    <button onclick="getCurrentLocation()">Get Current Location</button>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map;
+        var marker;
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+        function showPosition(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            fetch('https://api.opencagedata.com/geocode/v1/json?key=55c4abf3af714027aab3f62e7329fae3&q=${latitude}+${longitude}&pretty=1' )
+                .then(response => response.json())
+                .then(data => {
+                    const locationName = data.results[0].formatted;
+                    const locationTextbox = document.getElementById("location");
+                    locationTextbox.value = locationName;
+                    if (!map) {
+                        map = L.map('map').setView([latitude, longitude], 15);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap contributors'
+                        }).addTo(map);
+                    } else {
+                        map.setView([latitude, longitude]);
+                    }
+                    if (!marker) {
+                        marker = L.marker([latitude, longitude]).addTo(map);
+                    } else {
+                        marker.setLatLng([latitude, longitude]).update();
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
